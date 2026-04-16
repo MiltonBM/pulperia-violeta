@@ -53,7 +53,7 @@ function LoginScreen({ onLogin }) {
           </button>
         </form>
         <div className="login-footer">
-          <small>Usuario: Admin | Contraseña: Admin</small>
+        
         </div>
       </div>
     </div>
