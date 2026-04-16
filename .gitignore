@@ -1,13 +1,23 @@
-﻿node_modules/
-backend/node_modules/
-frontend/node_modules/
+﻿# Dependencias
+node_modules/
+**/node_modules/
+
+# Archivos de entorno
 .env
-.env.local
-.env.production
-build/
-dist/
-.cache/
+**/.env
+
+# Archivos de Docker
 *.log
+
+# Builds
+build/
+**/build/
+dist/
+
+# Archivos del sistema
 .DS_Store
-package-lock.json
-yarn.lock
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

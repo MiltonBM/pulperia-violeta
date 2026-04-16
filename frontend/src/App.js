@@ -3,8 +3,14 @@ import * as firebaseService from './services/firebaseService';
 import { generarFacturaPDF, generarHistorialVentasPDF } from './services/facturaService';
 import './App.css';
 import InitDatabase from './components/InitDatabase';
+import LoginScreen from './components/LoginScreen';
 
 function App() {
+  // Estado de autenticación
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [cargando, setCargando] = useState(true);
+
+  // Estados existentes
   const [activeTab, setActiveTab] = useState('ventas');
   const [proveedores, setProveedores] = useState([]);
   const [productos, setProductos] = useState([]);
@@ -22,10 +28,30 @@ function App() {
   const [clienteVenta, setClienteVenta] = useState('');
   const [metodoPagoVenta, setMetodoPagoVenta] = useState('EFECTIVO');
   const [buscando, setBuscando] = useState(false);
-  const [cargando, setCargando] = useState(true);
+
+  // Función para manejar el login exitoso
+  const handleLoginSuccess = (authenticated) => {
+    setIsAuthenticated(authenticated);
+    if (authenticated) {
+      cargarTodosLosDatos();
+    }
+  };
+
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    if (window.confirm('¿Deseas cerrar sesión?')) {
+      setIsAuthenticated(false);
+      setCarrito([]);
+      setProveedores([]);
+      setProductos([]);
+      setVentas([]);
+      setCompras([]);
+      setDashboardData(null);
+    }
+  };
 
   useEffect(() => {
-    cargarTodosLosDatos();
+    setCargando(false);
   }, []);
 
   const cargarTodosLosDatos = async () => {
@@ -379,11 +405,16 @@ function App() {
         <h3>📋 Lista de Proveedores</h3>
         <div className="table-responsive">
           <table>
-            <thead><tr><th>ID</th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>
+            <thead>
+              <tr><th>ID</th><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr>
+            </thead>
             <tbody>
               {proveedores.map(prov => (
                 <tr key={prov.Id}>
-                  <td>{prov.Id}</td><td>{prov.Nombre}</td><td>{prov.Telefono}</td><td>{prov.Email}</td>
+                  <td>{prov.Id}</td>
+                  <td>{prov.Nombre}</td>
+                  <td>{prov.Telefono}</td>
+                  <td>{prov.Email}</td>
                   <td className="acciones">
                     <button className="btn-editar" onClick={() => setEditandoProveedor(prov)}>✏️</button>
                     <button className="btn-eliminar" onClick={() => eliminarProveedor(prov.Id)}>🗑️</button>
@@ -431,11 +462,18 @@ function App() {
         <h3>📦 Lista de Productos</h3>
         <div className="table-responsive">
           <table>
-            <thead><tr><th>Código</th><th>Nombre</th><th>P. Venta</th><th>Stock</th><th>Stock Mín</th><th>Proveedor</th><th>Acciones</th></tr></thead>
+            <thead>
+              <tr><th>Código</th><th>Nombre</th><th>P. Venta</th><th>Stock</th><th>Stock Mín</th><th>Proveedor</th><th>Acciones</th></tr>
+            </thead>
             <tbody>
               {productos.map(prod => (
                 <tr key={prod.Id} className={prod.Stock <= prod.StockMinimo ? 'bajo-stock' : ''}>
-                  <td>{prod.CodigoBarra}</td><td>{prod.Nombre}</td><td>₡{prod.PrecioVenta}</td><td>{prod.Stock}</td><td>{prod.StockMinimo}</td><td>{prod.ProveedorNombre}</td>
+                  <td>{prod.CodigoBarra}</td>
+                  <td>{prod.Nombre}</td>
+                  <td>₡{prod.PrecioVenta}</td>
+                  <td>{prod.Stock}</td>
+                  <td>{prod.StockMinimo}</td>
+                  <td>{prod.ProveedorNombre}</td>
                   <td className="acciones">
                     <button className="btn-editar" onClick={() => setEditandoProducto(prod)}>✏️</button>
                     <button className="btn-eliminar" onClick={() => eliminarProducto(prod.Id)}>🗑️</button>
@@ -480,7 +518,9 @@ function App() {
           <>
             <div className="table-responsive">
               <table className="carrito-tabla">
-                <thead><tr><th>Producto</th><th>Precio Unit.</th><th>Cantidad</th><th>Subtotal</th><th>Acciones</th></tr></thead>
+                <thead>
+                  <tr><th>Producto</th><th>Precio Unit.</th><th>Cantidad</th><th>Subtotal</th><th>Acciones</th></tr>
+                </thead>
                 <tbody>
                   {carrito.map((item, index) => (
                     <tr key={index}>
@@ -518,7 +558,9 @@ function App() {
         </div>
         <div className="table-responsive">
           <table>
-            <thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Método</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <thead>
+              <tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Método</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
             <tbody>
               {ventas.map(venta => (
                 <tr key={venta.Id}>
@@ -601,7 +643,9 @@ function App() {
         ) : (
           <div className="table-responsive">
             <table>
-              <thead><tr><th>Folio</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Estado</th><th>Observaciones</th><th>Acciones</th></tr></thead>
+              <thead>
+                <tr><th>Folio</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Estado</th><th>Observaciones</th><th>Acciones</th></tr>
+              </thead>
               <tbody>
                 {compras.map(compra => (
                   <tr key={compra.Id} className={compra.Estado === 'ANULADA' ? 'compra-anulada' : ''}>
@@ -625,11 +669,23 @@ function App() {
     </div>
   );
 
+  // Si no está autenticado, mostrar pantalla de login
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={handleLoginSuccess} />;
+  }
+
+  // Si está autenticado pero cargando datos
   if (cargando) return <div className="loading">Cargando datos...</div>;
 
+  // App principal con botón de cerrar sesión
   return (
     <div className="app">
-      <header><h1>🏪 Pulpería Violeta - Punto de Venta</h1></header>
+      <header>
+        <h1>🏪 Pulpería Violeta - Punto de Venta</h1>
+        <button onClick={handleLogout} className="logout-button">
+          🚪 Cerrar Sesión
+        </button>
+      </header>
       {dashboardData && (
         <div className="dashboard-resumen">
           <div className="resumen-card"><span className="card-icon">💰</span><div className="card-info"><small>Ventas Hoy</small><strong>₡{dashboardData.ventasHoy?.toLocaleString() || '0'}</strong><span className="card-sub">{dashboardData.numeroVentasHoy || 0} ventas</span></div></div>
